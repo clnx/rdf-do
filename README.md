@@ -1,5 +1,5 @@
 # RDF::DataObjects
-
+TEST
 DataObjects-backed RDF.rb repository, aiming for a simple use case and
 currently targeting SQLite and Postgres.
 
