@@ -42,7 +42,7 @@ module RDF
             when Hash
               @db     = ::DataObjects::Connection.new(options[:db])
               adapter = options[:adapter]
-              prefixes = options[:prefixes]
+              @prefixes = options[:prefixes]
             when nil
               @db    = ::DataObjects::Connection.new('sqlite3://:memory:')
           end
