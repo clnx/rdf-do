@@ -275,7 +275,9 @@ module RDF
       # @return [RDF::Enumerable, void]  
       # @see RDF::Queryable#query
       def query_pattern(pattern, &block)
-        reader = @adapter.query(self,pattern.to_hash)
+        ph = pattern.to_hash
+        ph = ph.merge(pattern.options) if pattern.respond_to? :options
+        reader = @adapter.query(self, ph)
         while reader.next!
           yield RDF::Statement.new(
               :subject   => unserialize(reader.values[0]),
