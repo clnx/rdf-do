@@ -57,7 +57,7 @@ module RDF::DataObjects
             op = (use_like ? "LIKE" : "=")
             s = (use_like ? "%" : "")
             conditions << "#{resource.to_s} #{op} ?"
-            params     << s + repository.serialize(hash[resource]) + s
+            params     << repository.serialize(s + hash[resource] + s)
           end
         end
         where = conditions.empty? ? "" : "WHERE "
