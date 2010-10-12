@@ -42,6 +42,7 @@ module RDF
             when Hash
               @db     = ::DataObjects::Connection.new(options[:db])
               adapter = options[:adapter]
+              prefixes = options[:prefixes]
             when nil
               @db    = ::DataObjects::Connection.new('sqlite3://:memory:')
           end
@@ -138,28 +139,61 @@ module RDF
           exec(query, serialize(s. subject), serialize(s.predicate), serialize(s.object), serialize(s.context)) 
         end
       end
+      
+      ##
+      # N3/Turtle-style hash of prefixes/namespaces to be used in serialize/unserialize
+      # for a smaller database disk space used. From the outside
+      # everything should still look like NTriples, prefixes are implemented low level
+      # to avoid a dependency to a N3/Turtle parser gem.
+      # It is recommended to not add more prefixes once there are triples in
+      # the db, otherwise old triples saved without the prefix format will not
+      # be returned by queries. In such cases you should first get a list of those
+      # old triples, delete them from db, set new prefixes to repository, then add
+      # and save the triples using prefixes.
+      #
+      # @see RDF::DataObjects::Repository#serialize
+      # @see RDF::DataObjects::Repository#unserialize
+      attr_accessor :prefixes
 
       ## 
       # Serialize an RDF::Value into N-triples format.
       # Nil values will be encoded as 'nil' to avoid problems with SQL
       # implementations considering null values as distinct from one another.
+      # If prefixes are used, the result will be a N3 style "prefix:resourceName" string
       #
       # @see RDF::DataObjects::Repository#unserialize
+      # @see RDF::DataObjects::Repository#prefixes
       # @param [RDF::Value]
       # @return [String]
       def serialize(value)
-        value.nil? ? 'nil' : RDF::NTriples::Writer.serialize(value)
+        return 'nil' if value.nil?
+        if !@prefixes.nil? && value.respond_to?(:uri?) && value.uri?
+          val = value.value
+          @prefixes.each do |prefix, uri|
+            return prefix + ":" + val[uri.length, val.length - uri.length] if val.index(uri) == 0
+          end
+        end
+        RDF::NTriples::Writer.serialize(value)
       end
 
       ##
       # Unserialize an RDF::Value from N-triples format.
       # Expects nil values to be encoded as 'nil'.
+      # If prefixes are used, N3 style strings of a "prefix:resourceName"
+      # format will also be unserializad to the full URI.
       #
       # @see RDF::DataObjects::Repository#serialize
+      # @see RDF::DataObjects::Repository#prefixes
       # @param [String]
       # @return [RDF::Value]
       def unserialize(value)
-        value == 'nil' ? nil : RDF::NTriples::Reader.unserialize(value)
+        return nil if value == 'nil'
+        if !@prefixes.nil? && value.length > 1 && value[0] != "<" && value[0] != "\""
+          @prefixes.each do |prefix, uri|
+            return RDF::URI.new(uri + value[prefix.length + 1, value.length - prefix.length - 1]) if value.index(prefix + ":") == 0
+          end
+        end
+        RDF::NTriples::Reader.unserialize(value)
       end
      
       ##
