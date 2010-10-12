@@ -168,7 +168,7 @@ module RDF
       def serialize(value)
         return 'nil' if value.nil?
         if !@prefixes.nil? && value.respond_to?(:uri?) && value.uri?
-          val = value.value
+          val = value.to_s
           @prefixes.each do |prefix, uri|
             return prefix + ":" + val[uri.length, val.length - uri.length] if val.index(uri) == 0
           end
@@ -188,7 +188,7 @@ module RDF
       # @return [RDF::Value]
       def unserialize(value)
         return nil if value == 'nil'
-        if !@prefixes.nil? && value.length > 1 && value[0] != "<" && value[0] != "\""
+        if !@prefixes.nil?
           @prefixes.each do |prefix, uri|
             return RDF::URI.new(uri + value[prefix.length + 1, value.length - prefix.length - 1]) if value.index(prefix + ":") == 0
           end
