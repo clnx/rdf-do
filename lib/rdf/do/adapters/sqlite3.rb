@@ -16,7 +16,6 @@ module RDF::DataObjects
         begin do_repository.exec('CREATE INDEX `quads_context_index` ON `quads` (`context`)') rescue nil end
         begin do_repository.exec('CREATE INDEX `quads_object_index` ON `quads` (`object`)') rescue nil end
         begin do_repository.exec('CREATE INDEX `quads_predicate_index` ON `quads` (`predicate`)') rescue nil end
-        begin do_repository.exec('CREATE INDEX `quads_subject_index` ON `quads` (`subject`)') rescue nil end
       end
 
     end
