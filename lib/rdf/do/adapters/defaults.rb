@@ -54,11 +54,14 @@ module RDF::DataObjects
         [:subject, :predicate, :object, :context].each do |resource|
           unless hash[resource].nil?
             res = hash[resource]
-            use_like = (hash[:use_sql_like] == true && resource == :object && res.literal?)
-            op = (use_like ? "LIKE" : "=")
-            res = RDF::Literal.new("%#{res.value}%") if use_like
+            if hash[:use_sql_like] == true && resource == :object && !res.uri? && !res.node?
+              op = "LIKE"
+              params << "%#{ res.literal? ? res.value : res.to_s }%"
+            else
+              op = "="
+              params << repository.serialize(res)
+            end
             conditions << "#{resource.to_s} #{op} ?"
-            params     << repository.serialize(res)
           end
         end
         where = conditions.empty? ? "" : "WHERE "
